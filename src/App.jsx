@@ -1,9 +1,15 @@
 import './App.css';
 
-function App() {
-	return (
-		<div className="App"></div>
-	);
-}
+import Panel from './components/Panel';
 
-export default App;
+import GraphContextProvider from './hooks/graph-hooks';
+
+export default function App() {
+	return (
+		<div>
+			<GraphContextProvider>
+				<Panel/>
+			</GraphContextProvider>
+		</div>
+	);
+};
