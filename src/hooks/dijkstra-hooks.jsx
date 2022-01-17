@@ -38,6 +38,7 @@ const ADD_VERTEX = "ADD_VERTEX";
 const SET_WEIGHT = "SET_WEIGHT";
 const DEL_VERTEX = "DEL_VERTEX";
 const RUN = "RUN";
+const RESET = "RESET";
 
 export default function DijkstraContextProvider({ children }) {
 	const [store, dispatch] = useDispatch({ ...STORE }, dispatchers);
@@ -80,15 +81,27 @@ export default function DijkstraContextProvider({ children }) {
 		payload: start
 	}), [dispatch]);
 
+	const reset = useCallback((start = 0) => dispatch({ type: RESET }), [dispatch]);
+
 	return <DijkstraContext.Provider value={{
 		store, addVertex, setWeight,
-		deleteVertex, run
+		deleteVertex, run, reset
 	}}>
 		{ children }
 	</DijkstraContext.Provider>;
 }
 
 const dispatchers = {
+	[RESET]: (payload, oldState) => {
+		return {
+			...oldState,
+			start: -1,
+			shortestPath: {},
+			unvisited: {},
+			visited: {},
+			prev: {}
+		};
+	},
 	[RUN]: (payload, oldState) => {
 		const { vertexMap, neighbors } = oldState;
 		const flippedVertexMap = flip(vertexMap);
@@ -158,11 +171,6 @@ const dispatchers = {
 	[SET_WEIGHT]: (payload, oldState) => {
 		const { vertexMap, neighbors } = oldState;
 		const { vertexAId, vertexBId, weight } = payload;
-
-		console.log(vertexAId);
-		console.log(vertexBId);
-		console.log(weight);
-
 		const [ i, j ] = [vertexMap[vertexAId], vertexMap[vertexBId]];
 		const newNeighbors = [...neighbors];
 

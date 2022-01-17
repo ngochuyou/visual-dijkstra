@@ -1,5 +1,5 @@
 import {
-	createContext, useContext, useCallback, useEffect
+	createContext, useContext, useCallback
 } from 'react';
 
 import { useDispatch } from './utils-hooks';
@@ -82,7 +82,8 @@ export default function GraphContextProvider({ children }) {
 	const {
 		addVertex: dijkstraAddVertex,
 		setWeight: dijkstraSetWeight,
-		deleteVertex: dijkstraDeleteVertex
+		deleteVertex: dijkstraDeleteVertex,
+		reset: dijkstraReset
 	} = useDijkstra();
 
 	const addVertex = useCallback((vertexName) => {
@@ -124,9 +125,10 @@ export default function GraphContextProvider({ children }) {
 	const deleteVertex = useCallback(() => {
 		const deletedVerticies = [...store.selectedVerticies];
 
+		dijkstraReset();
 		dispatch({ type: DEL_VERTEX });
 		deletedVerticies.forEach(ele => dijkstraDeleteVertex({ id: ele }));
-	}, [dispatch, store, dijkstraDeleteVertex]);
+	}, [dispatch, store, dijkstraDeleteVertex, dijkstraReset]);
 
 	const connectVerticies = useCallback((weight = 0) => {
 		if (isNaN(weight) || weight < 1) {
