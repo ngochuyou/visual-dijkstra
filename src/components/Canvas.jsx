@@ -4,7 +4,7 @@ import { useGraph } from '../hooks/graph-hooks';
 export default function Canvas() {
 	return (
 		<div
-			className="canvas"
+			className="canvas uk-background-muted uk-box-shadow-large"
 			uk-height-viewport="offset-top: true"
 		>
 			<VertexLayer />

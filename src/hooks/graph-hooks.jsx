@@ -1,8 +1,9 @@
 import {
-	createContext, useContext, useCallback
+	createContext, useContext, useCallback, useEffect
 } from 'react';
 
 import { useDispatch } from './utils-hooks';
+import { useDijkstra } from './dijkstra-hooks';
 
 import { linear, hasLength, isBool, atom } from '../utils';
 
@@ -25,28 +26,78 @@ const VERTEX_ID_PROPNAME = "id";
 
 const STORE = {
 	verticies: [
-		new Vertex({name: "A", top: 150, left: 300}),
-		new Vertex({name: "B", top: 250, left: 150}),
-		new Vertex({name: "C", top: 300, left: 150}),
-		new Vertex({name: "D", top: 400, left: 220}),
-		new Vertex({name: "E", top: 200, left: 450})
+		new Vertex({id: "a", name: "A", top: 150, left: 300}),
+		new Vertex({id: "b", name: "B", top: 250, left: 150}),
+		new Vertex({id: "c", name: "C", top: 300, left: 150}),
+		new Vertex({id: "d", name: "D", top: 400, left: 220}),
+		new Vertex({id: "e", name: "E", top: 200, left: 450})
 	],
 	selectedVerticies: [],
-	edges: []
+	edges: [
+		new Edge({
+			vertexA: new Vertex({id: "a", name: "A", top: 150, left: 300}),
+			vertexB: new Vertex({id: "b", name: "B", top: 250, left: 150}),
+			weight: 1
+		}),
+		new Edge({
+			vertexA: new Vertex({id: "e", name: "E", top: 200, left: 450}),
+			vertexB: new Vertex({id: "b", name: "B", top: 250, left: 150}),
+			weight: 3
+		}),
+		new Edge({
+			vertexA: new Vertex({id: "e", name: "E", top: 200, left: 450}),
+			vertexB: new Vertex({id: "d", name: "D", top: 400, left: 220}),
+			weight: 7
+		}),
+		new Edge({
+			vertexA: new Vertex({id: "c", name: "C", top: 300, left: 150}),
+			vertexB: new Vertex({id: "d", name: "D", top: 400, left: 220}),
+			weight: 1
+		}),
+		new Edge({
+			vertexA: new Vertex({id: "c", name: "C", top: 300, left: 150}),
+			vertexB: new Vertex({id: "e", name: "E", top: 200, left: 450}),
+			weight: 1
+		}),
+		new Edge({
+			vertexA: new Vertex({id: "a", name: "A", top: 150, left: 300}),
+			vertexB: new Vertex({id: "d", name: "D", top: 400, left: 220}),
+			weight: 2
+		}),
+		new Edge({
+			vertexA: new Vertex({id: "b", name: "B", top: 250, left: 150}),
+			vertexB: new Vertex({id: "d", name: "D", top: 400, left: 220}),
+			weight: 2
+		}),
+		new Edge({
+			vertexA: new Vertex({id: "c", name: "C", top: 300, left: 150}),
+			vertexB: new Vertex({id: "a", name: "A", top: 150, left: 300}),
+			weight: 5
+		})
+	]
 };
 
 export default function GraphContextProvider({ children }) {
 	const [store, dispatch] = useDispatch({ ...STORE }, dispatchers);
+	const {
+		addVertex: dijkstraAddVertex,
+		setWeight: dijkstraSetWeight,
+		deleteVertex: dijkstraDeleteVertex
+	} = useDijkstra();
+
 	const addVertex = useCallback((vertexName) => {
+		const newVertex = new Vertex({
+			top: 250,
+			left: 250,
+			name: vertexName
+		});
+
 		dispatch({
 			type: ADD_VERTEX,
-			payload: new Vertex({
-				top: 250,
-				left: 250,
-				name: vertexName
-			})
+			payload: newVertex
 		});
-	}, [dispatch]);
+		dijkstraAddVertex(newVertex);
+	}, [dispatch, dijkstraAddVertex]);
 
 	const modifyVertexCords = useCallback(({ id = null, top = 100, left = 100} = {}) => {
 		if (!hasLength(id)) {
@@ -70,7 +121,12 @@ export default function GraphContextProvider({ children }) {
 		});
 	}, [dispatch]);
 
-	const deleteVertex = useCallback(() => dispatch({ type: DEL_VERTEX }), [dispatch]);
+	const deleteVertex = useCallback(() => {
+		const deletedVerticies = [...store.selectedVerticies];
+
+		dispatch({ type: DEL_VERTEX });
+		deletedVerticies.forEach(ele => dijkstraDeleteVertex({ id: ele }));
+	}, [dispatch, store, dijkstraDeleteVertex]);
 
 	const connectVerticies = useCallback((weight = 0) => {
 		if (isNaN(weight) || weight < 1) {
@@ -92,19 +148,27 @@ export default function GraphContextProvider({ children }) {
 					type: MOD_EDGE_WEIGHT,
 					payload: { id: edge.id, weight }
 				});
+				dijkstraSetWeight(new Edge({
+					...edge,
+					weight
+				}));
 				return;
 			}
 		}
 
+		const left = linear(verticies, VERTEX_ID_PROPNAME, leftId, ele => ele);
+		const right = linear(verticies, VERTEX_ID_PROPNAME, rightId, ele => ele);
+
 		dispatch({
 			type: CONNECT_VERTICIES,
-			payload: {
-				left: linear(verticies, VERTEX_ID_PROPNAME, leftId, ele => ele),
-				right: linear(verticies, VERTEX_ID_PROPNAME, rightId, ele => ele),
-				weight
-			}
+			payload: { left, right, weight }
 		});
-	}, [dispatch, store]);
+		dijkstraSetWeight(new Edge({
+			vertexA: left,
+			vertexB: right,
+			weight
+		}));
+	}, [dispatch, store, dijkstraSetWeight]);
 
 	const disconnectVerticies = useCallback(() => {
 		if (store.selectedVerticies.length < 2) {
@@ -126,16 +190,16 @@ export default function GraphContextProvider({ children }) {
 const dispatchers = {
 	[DISCONNECT_VERTICIES]: (payload, oldState) => {
 		const { selectedVerticies, edges } = oldState;
-		const [left, right] = selectedVerticies.slice(0, 2);
+		const [leftId, rightId] = selectedVerticies.slice(0, 2);
 
 		return {
 			...oldState,
-			edges: edges.filter(ele => !ele.contains(left.id) || !ele.contains(right.id)),
+			edges: edges.filter(ele => !ele.contains(leftId) || !ele.contains(rightId)),
 		}
 	},
 	[MOD_EDGE_WEIGHT]: ({ id, weight }, oldState) => {
 		const { edges } = oldState;
-		
+
 		return {
 			...oldState,
 			edges: edges.map(ele => ele.id !== id ? ele : new Edge({ ...ele, weight }))

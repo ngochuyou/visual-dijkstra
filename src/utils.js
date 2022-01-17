@@ -47,3 +47,15 @@ export const atom = (array, identifier = "id") => {
 
 	return Object.fromEntries(array.map(ele => [keyMapper(ele), ele]));
 };
+
+export const spread = (max = 0, value = {}) => [...Array(max)].map(ele => value);
+
+export const isEmpty = (obj = {}) => {
+	for (let i in obj) {
+		return false;
+	}
+
+	return true;
+}
+
+export const flip = (obj) => Object.fromEntries(Object.entries(obj).map(([key, val]) => [val, key]));

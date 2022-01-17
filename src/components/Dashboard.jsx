@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 import { NoFollow } from './Link';
 import { CenterModal } from './Modal';
 
 import { useGraph } from '../hooks/graph-hooks';
+import { useDijkstra } from '../hooks/dijkstra-hooks';
 import { useInput, useToggle } from '../hooks/utils-hooks';
 
 import { asIf, hasLength } from '../utils';
@@ -11,7 +12,7 @@ import { asIf, hasLength } from '../utils';
 export default function Dashboard() {
 	return (
 		<nav
-			className="uk-navbar-container"
+			className="uk-navbar-container uk-navbar-transparent"
 			uk-navbar="mode: click">
 			<div className="uk-navbar-left">
 				<ul className="uk-navbar-nav">
@@ -19,9 +20,26 @@ export default function Dashboard() {
 					<VertexRemover />
 					<VertexConnector />
 					<VertexDisconnector />
+					<DijkstraRunner />
 				</ul>
 			</div>
 		</nav>
+	);
+}
+
+function DijkstraRunner() {
+	const { run } = useDijkstra();
+
+	return (
+		<>
+			<li>
+				<NoFollow
+					onClick={() => run()}
+				>
+					<div uk-icon="play"></div>
+				</NoFollow>
+			</li>
+		</>
 	);
 }
 
@@ -127,8 +145,15 @@ function VertexRemover() {
 function VertexAdder() {
 	const { addVertex } = useGraph();
 	const [ isFormVisible, toggleFormVision ] = useToggle(false);
-	const [ vertexNameProps, ] = useInput("");
+	const [ vertexNameProps, setVertexName ] = useInput("");
 	const [ error, setError ] = useState(null);
+	const inputRef = useRef();
+
+	useEffect(() => {
+		if (isFormVisible) {
+			inputRef.current.focus();
+		}
+	}, [isFormVisible]);
 
 	const onAdd = (event) => {
 		event.preventDefault();
@@ -142,8 +167,8 @@ function VertexAdder() {
 		}
 
 		setError(null);
+		setVertexName("");
 		addVertex(vertexName);
-		toggleFormVision();
 	};
 	
 	return (
@@ -169,6 +194,7 @@ function VertexAdder() {
 									<input
 										className="uk-input"
 										placeholder="Vertex name"
+										ref={inputRef}
 										{ ...vertexNameProps }
 									/>
 									<p className="uk-text-danger">{error}</p>

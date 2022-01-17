@@ -163,3 +163,29 @@
 	right: 15%;
 	height: 2px;
 }
+
+.weight-table {
+	border-collapse: collapse;
+	border: none;
+}
+
+.weight-table td, .weight-table th {
+	height: 50px;
+	width: 50px;
+	position: relative;
+	border: .5px solid black;
+	color: var(--first-color);
+	transition: background-color 0.2s;
+}
+
+.weight-table td:hover {
+	background-color: var(--first-color);
+	color: var(--second-color);
+}
+
+.weight-table td > span, .weight-table th > span {
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
