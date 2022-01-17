@@ -121,8 +121,8 @@ const dispatchers = {
 
 			for (let i of neighbors[start].keys()) {
 				if (neighbors[start][i] !== I && unvisited[i] === true) {
-					s = shortestPath[flippedVertexMap[i]];
-					c = shortestPath[flippedVertexMap[start]] + neighbors[start][i];
+					s = +shortestPath[flippedVertexMap[i]];
+					c = +(shortestPath[flippedVertexMap[start]] + neighbors[start][i]);
 
 					if (c < s) {
 						shortestPath[flippedVertexMap[i]] = c;
