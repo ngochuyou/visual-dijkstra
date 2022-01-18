@@ -108,11 +108,9 @@ const dispatchers = {
 		let start = payload;
 		let shortestPath = Object.fromEntries(Object.entries(vertexMap).map(([key, val]) => val !== start ? [key, I] : [key, 0]));
 		let unvisited = Object.fromEntries(Object.values(vertexMap).map(ele => [ele, true]));
-		let prev = {
-			[start]: null
-		};
+		let prev = Object.fromEntries(Object.entries(vertexMap).map(([key, val]) => [val, []]))
 		let visited = {};
-		let s, c;
+		let currentCost, calculatedCost;
 
 		while (!isEmpty(unvisited)) {
 			if (start === -1) {
@@ -121,12 +119,15 @@ const dispatchers = {
 
 			for (let i of neighbors[start].keys()) {
 				if (neighbors[start][i] !== I && unvisited[i] === true) {
-					s = +shortestPath[flippedVertexMap[i]];
-					c = +(shortestPath[flippedVertexMap[start]] + neighbors[start][i]);
+					currentCost = +shortestPath[flippedVertexMap[i]];
+					calculatedCost = +(shortestPath[flippedVertexMap[start]] + neighbors[start][i]);
 
-					if (c < s) {
-						shortestPath[flippedVertexMap[i]] = c;
-						prev[i] = flippedVertexMap[start];
+					if (calculatedCost < currentCost) {
+						shortestPath[flippedVertexMap[i]] = calculatedCost;
+						prev[i] = [
+							...prev[i],
+							flippedVertexMap[start]
+						];
 					}
 				}
 			}
@@ -149,7 +150,7 @@ const dispatchers = {
 			shortestPath,
 			unvisited,
 			visited,
-			prev
+			prev: Object.fromEntries(Object.entries(prev).map(([key, val], index) => [key, [...val, flippedVertexMap[index]]]))
 		};
 	},
 	[DEL_VERTEX]: (payload, oldState) => {

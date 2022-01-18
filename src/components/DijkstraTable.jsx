@@ -23,8 +23,8 @@ export default function DijkstraTable() {
 					<table className="uk-table uk-table-divider uk-table-middle">
 						<thead>
 							<tr>
-								<th>Vertex</th>
-								<th>Cost</th>
+								<th className="uk-table-shrink">Vertex</th>
+								<th className="uk-table-shrink">Cost</th>
 								<th>Path</th>
 							</tr>
 						</thead>
@@ -35,7 +35,7 @@ export default function DijkstraTable() {
 									<tr key={key}>
 										<td>{verticies[vertexMap[key]].name}</td>
 										<td>{val === Infinity ? <>&infin;</> : val}</td>
-										<td>{prev[index] == null ? "" : verticies[vertexMap[prev[index]]].name}</td>
+										<td>{ prev[index].map(ele => verticies[vertexMap[ele]].name).join(' ') }</td>
 									</tr>
 								))
 						}
