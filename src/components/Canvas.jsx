@@ -1,5 +1,7 @@
-import { Fragment } from 'react';
+import { Fragment, useEffect } from 'react';
+
 import { useGraph } from '../hooks/graph-hooks';
+import { STEP_INITIAL, STEP_CALCULATE_COSTS, useDijkstra } from '../hooks/dijkstra-hooks';
 
 export default function Canvas() {
 	return (
@@ -41,14 +43,35 @@ function EdgeLayer() {
 
 function VertexLayer() {
 	const {
-		store: { verticies },
-		modifyVertexCords, modifyVertexSelectState
+		store: { verticies, edges },
+		modifyVertexCords, modifyVertexSelectState,
+		modifyEdgesSelectState
 	} = useGraph();
+	const {
+		store: {
+			neighbors, start,
+			simulator: { step }
+		}
+	} = useDijkstra();
+
+	useEffect(() => {
+		if (step === STEP_CALCULATE_COSTS) {
+			modifyEdgesSelectState(
+				neighbors[start]
+					.map((ele, index) => ele !== Infinity ? index : null)
+					.filter(ele => ele != null)
+					.map(ele => edges.filter(edge => edge.contains(verticies[start].id) && edge.contains(verticies[ele].id))[0]),
+				true);
+			return;
+		}
+
+		modifyEdgesSelectState(verticies, false);
+	}, [step, start]);
 
 	const onDragStart = (e) => {
 		e.dataTransfer.setData('mozilla', 'make-draggable');
 	};
-
+	console.log(edges);
 	const onDragEnd = (vertex, event) => {
 		const rect = event.currentTarget.parentNode.getBoundingClientRect();
 		const panelX = window.scrollX + rect.left;

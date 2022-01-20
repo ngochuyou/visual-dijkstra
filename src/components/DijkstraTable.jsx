@@ -3,18 +3,36 @@ import { useGraph } from '../hooks/graph-hooks';
 
 export default function DijkstraTable() {
 	const { store: {
-		start, shortestPath, vertexMap, prev
+		shortestPath, vertexMap, prev,
+		visited, unvisited,
+		simulator: { step }
 	} } = useDijkstra();
 	const { store: {
-		verticies
+		verticies, selectedVerticies
 	} } = useGraph();
-
+	
 	return (
 		<div className="overflow-container uk-padding-small" uk-height-viewport="offset-top: true">
 			<div className="overflow" uk-overflow-auto="selContainer: .overflow-container; selContent: .overflow">
 				<div className="uk-margin">
 					<label className="uk-label backgroundf">Start</label>
-					<span className="uk-margin-left">{start}</span>
+					{
+						selectedVerticies.length === 0 ?
+						<span className="uk-margin-left uk-text-muted">Select a vertex first</span> :
+						<span className="uk-margin-left">{verticies[vertexMap[selectedVerticies[0]]].name}</span>
+					}
+				</div>
+				<div className="uk-margin">
+					<div className="uk-grid-small uk-child-width-1-2" uk-grid="">
+						<div>
+							<label className="uk-label backgroundf">Unvisited</label>
+							<p>{ Object.keys(unvisited).map(ele => verticies[ele].name).join(' ') }</p>
+						</div>
+						<div>
+							<label className="uk-label backgroundf">Visited</label>
+							<p>{ Object.keys(visited).map(ele => verticies[ele].name).join(' ') }</p>
+						</div>
+					</div>
 				</div>
 				<div className="uk-margin">
 					<h5 className="uk-heading-line">
@@ -33,9 +51,9 @@ export default function DijkstraTable() {
 							Object.entries(shortestPath)
 								.map(([key, val], index) => (
 									<tr key={key}>
-										<td>{verticies[vertexMap[key]].name}</td>
-										<td>{val === Infinity ? <>&infin;</> : val}</td>
-										<td>{ prev[index].map(ele => verticies[vertexMap[ele]].name).join(' ') }</td>
+										<td className="uk-text-center">{verticies[vertexMap[key]].name}</td>
+										<td className="uk-text-center">{val === Infinity ? <>&infin;</> : val}</td>
+										<td>{prev[index].map(ele => verticies[vertexMap[ele]].name).join(' ')}</td>
 									</tr>
 								))
 						}

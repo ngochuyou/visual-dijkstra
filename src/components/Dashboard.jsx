@@ -4,7 +4,7 @@ import { NoFollow } from './Link';
 import { CenterModal } from './Modal';
 
 import { useGraph } from '../hooks/graph-hooks';
-import { useDijkstra } from '../hooks/dijkstra-hooks';
+import { STEP_INITIAL, useDijkstra } from '../hooks/dijkstra-hooks';
 import { useInput, useToggle } from '../hooks/utils-hooks';
 
 import { asIf, hasLength } from '../utils';
@@ -21,20 +21,93 @@ export default function Dashboard() {
 					<VertexConnector />
 					<VertexDisconnector />
 					<DijkstraRunner />
+					<Clearer />
+					<SimulatorControls />
 				</ul>
 			</div>
 		</nav>
 	);
 }
 
-function DijkstraRunner() {
-	const { run } = useDijkstra();
+function SimulatorControls() {
+	const {
+		store: {
+			simulator: { step },
+			vertexMap
+		},
+		doStep
+	} = useDijkstra();
+	const {
+		store: { selectedVerticies }
+	} = useGraph();
+
+	const onPlay = () => {
+		if (step !== STEP_INITIAL) {
+			doStep();
+			return;
+		}
+
+		if (selectedVerticies.length < 1) {
+			return;
+		}
+
+		doStep(step === STEP_INITIAL ? vertexMap[selectedVerticies[0]] : null);
+	};
 
 	return (
 		<>
 			<li>
 				<NoFollow
-					onClick={() => run()}
+					onClick={onPlay}
+					className="uk-button"
+				>
+					Play
+				</NoFollow>
+			</li>
+		</>
+	);
+}
+
+function Clearer() {
+	const { clear } = useGraph();
+	const { reset: dijkstraReset } = useDijkstra();
+
+	const onClear = () => {
+		dijkstraReset();
+		clear();
+	};
+
+	return (
+		<>
+			<li>
+				<NoFollow
+					onClick={onClear}
+					className="uk-button"
+				>
+					Clear
+				</NoFollow>
+			</li>
+		</>
+	);
+}
+
+function DijkstraRunner() {
+	const { run, store: { vertexMap } } = useDijkstra();
+	const { store: { selectedVerticies } } = useGraph();
+
+	const onRun = () => {
+		if (selectedVerticies.length === 0) {
+			return;
+		}
+
+		run(vertexMap[selectedVerticies[0]]);
+	};
+
+	return (
+		<>
+			<li>
+				<NoFollow
+					onClick={onRun}
 				>
 					<div uk-icon="play"></div>
 				</NoFollow>

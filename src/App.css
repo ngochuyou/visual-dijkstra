@@ -121,6 +121,11 @@
 	stroke-width: 2;
 }
 
+.canvas > svg > line.selected {
+	stroke: #42dbfb !important;
+	stroke-width: 4 !important;
+}
+
 .canvas > svg > text {
 	fill: red;
 	font: bold 20px sans-serif;

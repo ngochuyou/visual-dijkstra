@@ -15,12 +15,14 @@ const GraphContext = createContext({});
 export const useGraph = () => useContext(GraphContext);
 
 const ADD_VERTEX = "ADD_VERTEX";
+const CLEAR = "CLEAR";
 const MOD_VERTEX_CORDS = "MOD_VERTEX_CORDS";
 const MOD_VERTEX_SELECT_STATE = "MOD_VERTEX_SELECT_STATE";
 const DEL_VERTEX = "DEL_VERTEX";
 const CONNECT_VERTICIES = "CONNECT_VERTICIES";
 const DISCONNECT_VERTICIES = "DISCONNECT_VERTICIES";
 const MOD_EDGE_WEIGHT = "MOD_EDGE_WEIGHT";
+const MOD_EDGE_SELECT_STATE = "MOD_EDGE_SELECT_STATE";
 
 const VERTEX_ID_PROPNAME = "id";
 
@@ -180,16 +182,51 @@ export default function GraphContextProvider({ children }) {
 		dispatch({ type: DISCONNECT_VERTICIES });
 	}, [dispatch, store]);
 
+	const clear = useCallback(() => dispatch({ type: CLEAR }), [dispatch]);
+
+	const modifyEdgesSelectState = useCallback((selectedEdges, selected = false) => {
+		dispatch({
+			type: MOD_EDGE_SELECT_STATE,
+			payload: {
+				edges: selectedEdges,
+				selected
+			}
+		});
+	}, [dispatch]);
+
 	return <GraphContext.Provider value={{
 		store, addVertex, modifyVertexCords,
 		modifyVertexSelectState, deleteVertex,
-		connectVerticies, disconnectVerticies
+		connectVerticies, disconnectVerticies,
+		clear, modifyEdgesSelectState
 	}}>
 		{ children }
 	</GraphContext.Provider>;
 }
 
 const dispatchers = {
+	[MOD_EDGE_SELECT_STATE]: (payload, oldState) => {
+		const { edges } = oldState;
+		const { selected } = payload;
+		const selectedEdges = atom(payload.edges);
+		console.log(selected, selectedEdges);
+		return {
+			...oldState,
+			edges: edges.map((ele, index) => selectedEdges[ele.id] == null ? ele : new Edge({
+				...ele,
+				selected
+			}))
+		};
+	},
+	[CLEAR]: (payload, oldState) => {
+		const { verticies } = oldState;
+
+		return {
+			...oldState,
+			verticies: verticies.map(ele => new Vertex({ ...ele, selected: false })),
+			selectedVerticies: []
+		};
+	},
 	[DISCONNECT_VERTICIES]: (payload, oldState) => {
 		const { selectedVerticies, edges } = oldState;
 		const [leftId, rightId] = selectedVerticies.slice(0, 2);
