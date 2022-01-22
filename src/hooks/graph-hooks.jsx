@@ -5,7 +5,7 @@ import {
 import { useDispatch } from './utils-hooks';
 import { useDijkstra } from './dijkstra-hooks';
 
-import { linear, hasLength, isBool, atom } from '../utils';
+import { linear, hasLength, isBool, atom, I } from '../utils';
 
 import Vertex from '../model/Vertex';
 import Edge from '../model/Edge';
@@ -23,57 +23,59 @@ const CONNECT_VERTICIES = "CONNECT_VERTICIES";
 const DISCONNECT_VERTICIES = "DISCONNECT_VERTICIES";
 const MOD_EDGE_WEIGHT = "MOD_EDGE_WEIGHT";
 const MOD_EDGE_SELECT_STATE = "MOD_EDGE_SELECT_STATE";
+const CLEAR_SELECTED_VERTICIES = "CLEAR_SELECTED_VERTICIES";
+const CLEAR_SELECTED_EDGES = "CLEAR_SELECTED_EDGES";
 
 const VERTEX_ID_PROPNAME = "id";
 
 const STORE = {
 	verticies: [
-		new Vertex({id: "a", name: "A", top: 150, left: 300}),
-		new Vertex({id: "b", name: "B", top: 250, left: 150}),
-		new Vertex({id: "c", name: "C", top: 300, left: 150}),
-		new Vertex({id: "d", name: "D", top: 400, left: 220}),
-		new Vertex({id: "e", name: "E", top: 200, left: 450})
+		new Vertex({id: "a", name: "A", top: 307, left: 174}),
+		new Vertex({id: "b", name: "B", top: 132, left: 92}),
+		new Vertex({id: "c", name: "C", top: 380, left: 371}),
+		new Vertex({id: "d", name: "D", top: 219, left: 294}),
+		new Vertex({id: "e", name: "E", top: 122, left: 494})
 	],
 	selectedVerticies: [],
 	edges: [
 		new Edge({
-			vertexA: new Vertex({id: "a", name: "A", top: 150, left: 300}),
-			vertexB: new Vertex({id: "b", name: "B", top: 250, left: 150}),
+			vertexA: new Vertex({id: "a", name: "A", top: 307, left: 174}),
+			vertexB: new Vertex({id: "b", name: "B", top: 132, left: 92}),
 			weight: 1
 		}),
 		new Edge({
-			vertexA: new Vertex({id: "e", name: "E", top: 200, left: 450}),
-			vertexB: new Vertex({id: "b", name: "B", top: 250, left: 150}),
+			vertexA: new Vertex({id: "e", name: "E", top: 122, left: 494}),
+			vertexB: new Vertex({id: "b", name: "B", top: 132, left: 92}),
 			weight: 3
 		}),
 		new Edge({
-			vertexA: new Vertex({id: "e", name: "E", top: 200, left: 450}),
-			vertexB: new Vertex({id: "d", name: "D", top: 400, left: 220}),
+			vertexA: new Vertex({id: "e", name: "E", top: 122, left: 494}),
+			vertexB: new Vertex({id: "d", name: "D", top: 219, left: 294}),
 			weight: 7
 		}),
 		new Edge({
-			vertexA: new Vertex({id: "c", name: "C", top: 300, left: 150}),
-			vertexB: new Vertex({id: "d", name: "D", top: 400, left: 220}),
+			vertexA: new Vertex({id: "c", name: "C", top: 380, left: 371}),
+			vertexB: new Vertex({id: "d", name: "D", top: 219, left: 294}),
 			weight: 1
 		}),
 		new Edge({
-			vertexA: new Vertex({id: "c", name: "C", top: 300, left: 150}),
-			vertexB: new Vertex({id: "e", name: "E", top: 200, left: 450}),
+			vertexA: new Vertex({id: "c", name: "C", top: 380, left: 371}),
+			vertexB: new Vertex({id: "e", name: "E", top: 122, left: 494}),
 			weight: 1
 		}),
 		new Edge({
-			vertexA: new Vertex({id: "a", name: "A", top: 150, left: 300}),
-			vertexB: new Vertex({id: "d", name: "D", top: 400, left: 220}),
+			vertexA: new Vertex({id: "a", name: "A", top: 307, left: 174}),
+			vertexB: new Vertex({id: "d", name: "D", top: 219, left: 294}),
 			weight: 2
 		}),
 		new Edge({
-			vertexA: new Vertex({id: "b", name: "B", top: 250, left: 150}),
-			vertexB: new Vertex({id: "d", name: "D", top: 400, left: 220}),
+			vertexA: new Vertex({id: "b", name: "B", top: 132, left: 92}),
+			vertexB: new Vertex({id: "d", name: "D", top: 219, left: 294}),
 			weight: 2
 		}),
 		new Edge({
-			vertexA: new Vertex({id: "c", name: "C", top: 300, left: 150}),
-			vertexB: new Vertex({id: "a", name: "A", top: 150, left: 300}),
+			vertexA: new Vertex({id: "c", name: "C", top: 380, left: 371}),
+			vertexB: new Vertex({id: "a", name: "A", top: 307, left: 174}),
 			weight: 5
 		})
 	]
@@ -175,12 +177,24 @@ export default function GraphContextProvider({ children }) {
 	}, [dispatch, store, dijkstraSetWeight]);
 
 	const disconnectVerticies = useCallback(() => {
-		if (store.selectedVerticies.length < 2) {
+		const { selectedVerticies } = store;
+
+		if (selectedVerticies.length < 2) {
 			return;
 		}
 
+		for (let edge of store.edges) {
+			if (edge.contains(selectedVerticies[0]) && edge.contains(selectedVerticies[1])) {
+				dijkstraSetWeight(new Edge({
+					...edge,
+					weight: I
+				}));
+				break;
+			}
+		}
+
 		dispatch({ type: DISCONNECT_VERTICIES });
-	}, [dispatch, store]);
+	}, [dispatch, dijkstraSetWeight, store]);
 
 	const clear = useCallback(() => dispatch({ type: CLEAR }), [dispatch]);
 
@@ -194,22 +208,49 @@ export default function GraphContextProvider({ children }) {
 		});
 	}, [dispatch]);
 
+	const clearSelectedVerticies = useCallback(() => dispatch({ type: CLEAR_SELECTED_VERTICIES }), [dispatch]);
+
+	const clearSelectedEdges = useCallback(() => dispatch({ type: CLEAR_SELECTED_EDGES }), [dispatch]);
+
 	return <GraphContext.Provider value={{
 		store, addVertex, modifyVertexCords,
 		modifyVertexSelectState, deleteVertex,
 		connectVerticies, disconnectVerticies,
-		clear, modifyEdgesSelectState
+		clear, modifyEdgesSelectState, clearSelectedVerticies,
+		clearSelectedEdges
 	}}>
 		{ children }
 	</GraphContext.Provider>;
 }
 
 const dispatchers = {
+	[CLEAR_SELECTED_EDGES]: (payload, oldState) => {
+		const { edges } = oldState;
+
+		return {
+			...oldState,
+			edges: edges.map(ele => new Edge({
+				...ele,
+				selected: false
+			}))
+		};		
+	},
+	[CLEAR_SELECTED_VERTICIES]: (payload, oldState) => {
+		const { verticies } = oldState;
+
+		return {
+			...oldState,
+			verticies: verticies.map(ele => new Vertex({
+				...ele,
+				selected: false
+			}))
+		};
+	},
 	[MOD_EDGE_SELECT_STATE]: (payload, oldState) => {
 		const { edges } = oldState;
 		const { selected } = payload;
 		const selectedEdges = atom(payload.edges);
-		console.log(selected, selectedEdges);
+
 		return {
 			...oldState,
 			edges: edges.map((ele, index) => selectedEdges[ele.id] == null ? ele : new Edge({
@@ -219,11 +260,15 @@ const dispatchers = {
 		};
 	},
 	[CLEAR]: (payload, oldState) => {
-		const { verticies } = oldState;
+		const { verticies, edges } = oldState;
 
 		return {
 			...oldState,
 			verticies: verticies.map(ele => new Vertex({ ...ele, selected: false })),
+			edges: edges.map(ele => new Edge({
+				...ele,
+				selected: false
+			})),
 			selectedVerticies: []
 		};
 	},
@@ -269,7 +314,7 @@ const dispatchers = {
 	},
 	[MOD_VERTEX_SELECT_STATE]: ({ id, selected } = {}, oldState) => {
 		const { verticies, selectedVerticies } = oldState;
-
+		
 		return {
 			...oldState,
 			verticies: verticies.map(ele => ele.id !== id ? ele : new Vertex({ ...ele, selected })),

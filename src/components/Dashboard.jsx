@@ -2,69 +2,151 @@ import { useState, useRef, useEffect } from 'react';
 
 import { NoFollow } from './Link';
 import { CenterModal } from './Modal';
+import SimulatorControls from './SimulatorControls';
 
 import { useGraph } from '../hooks/graph-hooks';
-import { STEP_INITIAL, useDijkstra } from '../hooks/dijkstra-hooks';
+import { useDijkstra } from '../hooks/dijkstra-hooks';
 import { useInput, useToggle } from '../hooks/utils-hooks';
+import {
+	usePanel,
+	TYPE_A as LAYOUT_TYPE_A, TYPE_B as LAYOUT_TYPE_B
+} from './Panel';
 
 import { asIf, hasLength } from '../utils';
 
 export default function Dashboard() {
 	return (
 		<nav
-			className="uk-navbar-container uk-navbar-transparent"
+			className="uk-navbar-container uk-navbar-transparent uk-box-shadow-medium"
 			uk-navbar="mode: click">
-			<div className="uk-navbar-left">
+			<div className="uk-navbar-left noselect">
 				<ul className="uk-navbar-nav">
 					<VertexAdder />
 					<VertexRemover />
 					<VertexConnector />
 					<VertexDisconnector />
-					<DijkstraRunner />
 					<Clearer />
 					<SimulatorControls />
+					<Saver />
 				</ul>
+			</div>
+			<div className="uk-navbar-right noselect">
+				<ul className="uk-navbar-nav">
+					<LayoutPicker />
+				</ul>
+				<Logo />
 			</div>
 		</nav>
 	);
 }
 
-function SimulatorControls() {
-	const {
-		store: {
-			simulator: { step },
-			vertexMap
-		},
-		doStep
-	} = useDijkstra();
-	const {
-		store: { selectedVerticies }
-	} = useGraph();
-
-	const onPlay = () => {
-		if (step !== STEP_INITIAL) {
-			doStep();
-			return;
-		}
-
-		if (selectedVerticies.length < 1) {
-			return;
-		}
-
-		doStep(step === STEP_INITIAL ? vertexMap[selectedVerticies[0]] : null);
-	};
-
+function Saver() {
 	return (
 		<>
 			<li>
 				<NoFollow
-					onClick={onPlay}
 					className="uk-button"
 				>
-					Play
+					Save
 				</NoFollow>
 			</li>
 		</>
+	);
+}
+
+function LayoutPicker() {
+	const { setLayoutType } = usePanel();
+
+	return (
+		<>
+			<li>
+				<NoFollow>Layout</NoFollow>
+				<div className="uk-navbar-dropdown uk-navbar-dropdown-width-2">
+					<div className="uk-navbar-dropdown-grid uk-child-width-1-2" uk-grid="">
+						<div>
+							<ul className="uk-nav uk-navbar-dropdown-nav">
+								<li
+									className="uk-active uk-box-shadow-hover-large pointer"
+									onClick={() => setLayoutType(LAYOUT_TYPE_A)}
+								>
+									<div
+										className="uk-width-1-1 uk-grid-collapse"
+										uk-grid=""
+									>
+										<div
+											className="uk-width-3-5"
+										>
+											<div style={{ height: "102px", border: "1px dashed var(--first-color)" }}
+												className="uk-width-1-1 uk-position-relative">
+												<span className="uk-position-center colors">Panel</span>
+											</div>
+										</div>
+										<div className="uk-width-2-5">
+											<div style={{ height: "100px", border: "1px dashed var(--first-color)" }}
+												className="uk-position-relative">
+												<span className="uk-position-center colors">Matrix</span>
+											</div>
+										</div>
+										<div style={{
+											height: "50px", border: "1px dashed var(--first-color)"
+										}} className="uk-position-relative uk-width-1-1">
+											<span className="uk-position-center colors">Results</span>
+										</div>
+									</div>
+								</li>
+							</ul>
+						</div>
+						<div>
+							<ul className="uk-nav uk-navbar-dropdown-nav">
+								<li
+									className="uk-active uk-box-shadow-hover-large pointer"
+									onClick={() => setLayoutType(LAYOUT_TYPE_B)}
+								>
+									<div
+										className="uk-width-1-1 uk-grid-collapse"
+										uk-grid=""
+									>
+										<div
+											className="uk-width-3-5"
+										>
+											<div style={{ height: "102px", border: "1px dashed var(--first-color)" }}
+												className="uk-width-1-1 uk-position-relative">
+												<span className="uk-position-center colors">Panel</span>
+											</div>
+										</div>
+										<div className="uk-width-2-5">
+											<div style={{ height: "100px", border: "1px dashed var(--first-color)" }}
+												className="uk-position-relative">
+												<span className="uk-position-center colors">Results</span>
+											</div>
+										</div>
+									</div>
+									<div style={{
+										height: "50px", border: "1px dashed var(--first-color)"
+									}} className="uk-position-relative uk-width-1-1">
+										<span className="uk-position-center colors">Matrix</span>
+									</div>
+								</li>
+							</ul>
+						</div>
+					</div>
+				</div>
+			</li>
+		</>
+	);
+}
+
+function Logo() {
+	return (
+		<NoFollow className="uk-navbar-item uk-logo">
+			<div
+				uk-icon="icon: chevron-left; ratio: 1.2"
+			></div>
+			Dijkstra
+			<div
+				uk-icon="icon: chevron-right; ratio: 1.2"
+			></div>
+		</NoFollow>
 	);
 }
 
@@ -91,31 +173,6 @@ function Clearer() {
 	);
 }
 
-function DijkstraRunner() {
-	const { run, store: { vertexMap } } = useDijkstra();
-	const { store: { selectedVerticies } } = useGraph();
-
-	const onRun = () => {
-		if (selectedVerticies.length === 0) {
-			return;
-		}
-
-		run(vertexMap[selectedVerticies[0]]);
-	};
-
-	return (
-		<>
-			<li>
-				<NoFollow
-					onClick={onRun}
-				>
-					<div uk-icon="play"></div>
-				</NoFollow>
-			</li>
-		</>
-	);
-}
-
 function VertexDisconnector() {
 	const { disconnectVerticies } = useGraph();
 	
@@ -125,7 +182,10 @@ function VertexDisconnector() {
 				<NoFollow
 					onClick={disconnectVerticies}
 				>
-					<div className="crossed" uk-icon="link"></div>
+					<div
+						className="crossed" uk-icon="link"
+						uk-tooltip="Disconnect two Verticies"
+					></div>
 				</NoFollow>
 			</li>
 		</>
@@ -159,7 +219,10 @@ function VertexConnector() {
 				<NoFollow
 					onClick={toggleFormVision}
 				>
-					<div uk-icon="link"></div>
+					<div
+						uk-icon="link"
+						uk-tooltip="Connect two Verticies"
+					></div>
 				</NoFollow>
 				{
 					asIf(isFormVisible)
@@ -172,13 +235,15 @@ function VertexConnector() {
 								<h3 className="uk-heading uk-heading-line">
 									<span>Connect two Verticies</span>
 								</h3>
-								<div className="uk-margin">
+								<div className="uk-margin labeled">
 									<input
 										className="uk-input"
-										placeholder="Weight"
+										id="weight-input"
 										type="number"
+										required="required"
 										{ ...weightProps }
 									/>
+									<label forhtml="weight-input">Edge Weight</label>
 									<p className="uk-text-danger">{error}</p>
 								</div>
 								<div className="uk-margin uk-text-right">
@@ -208,7 +273,10 @@ function VertexRemover() {
 				<NoFollow
 					onClick={deleteVertex}
 				>
-					<div uk-icon="trash"></div>
+					<div
+						uk-icon="trash"
+						uk-tooltip="Delete a Vertex"
+					></div>
 				</NoFollow>
 			</li>
 		</>
@@ -250,7 +318,7 @@ function VertexAdder() {
 				<NoFollow
 					onClick={toggleFormVision}
 				>
-					<div uk-icon="plus"></div>
+					<div uk-icon="plus" uk-tooltip="Add a Vertex"></div>
 				</NoFollow>
 				{
 					asIf(isFormVisible)
@@ -263,13 +331,14 @@ function VertexAdder() {
 								<h3 className="uk-heading uk-heading-line">
 									<span>Add a new Vertex</span>
 								</h3>
-								<div className="uk-margin">
+								<div className="uk-margin labeled">
 									<input
-										className="uk-input"
-										placeholder="Vertex name"
 										ref={inputRef}
+										id="vertex-name-input"
+										required="required"
 										{ ...vertexNameProps }
 									/>
+									<label forhtml="vertex-name-input">Vertex Name</label>
 									<p className="uk-text-danger">{error}</p>
 								</div>
 								<div className="uk-margin uk-text-right">

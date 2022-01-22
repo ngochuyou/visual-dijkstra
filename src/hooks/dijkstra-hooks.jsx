@@ -4,18 +4,11 @@ import {
 
 import { useDispatch } from './utils-hooks';
 
-import { spread, isEmpty, flip } from '../utils';
+import { spread } from '../utils';
 
 const DijkstraContext = createContext({});
 
 export const useDijkstra = () => useContext(DijkstraContext);
-
-const I = Infinity;
-
-export const STEP_INITIAL = "STEP_INITIAL";
-export const STEP_CALCULATE_COSTS = "STEP_CALCULATE_COSTS";
-export const STEP_LOCATE_MIN = "STEP_LOCATE_MIN";
-export const STEP_END = "STEP_END";
 
 const STORE = {
 	vertexMap: {
@@ -32,22 +25,17 @@ const STORE = {
 		[2, 2, 1, Infinity, 7],
 		[Infinity, 3, 1, 7, Infinity]
 	],
-	start: -1,
 	shortestPath: {},
 	unvisited: {},
 	visited: {},
-	prev: {},
-	simulator: {
-		step: STEP_INITIAL
-	}
+	paths: []
 };
 
 const ADD_VERTEX = "ADD_VERTEX";
 const SET_WEIGHT = "SET_WEIGHT";
 const DEL_VERTEX = "DEL_VERTEX";
-const RUN = "RUN";
+const UPDATE_RUN_RESULT = "UPDATE_RUN_RESULT";
 const RESET = "RESET";
-const DO_STEP = "DO_STEP";
 
 export default function DijkstraContextProvider({ children }) {
 	const [store, dispatch] = useDispatch({ ...STORE }, dispatchers);
@@ -85,180 +73,49 @@ export default function DijkstraContextProvider({ children }) {
 		});
 	}, [dispatch]);
 
-	const run = useCallback((start = 0) => dispatch({
-		type: RUN,
-		payload: start
-	}), [dispatch]);
+	const reset = useCallback(() => dispatch({ type: RESET }), [dispatch]);
 
-	const reset = useCallback((start = 0) => dispatch({ type: RESET }), [dispatch]);
-
-	const doStep = useCallback((start = 0) => dispatch({
-		type: DO_STEP,
-		payload: start
-	}), [dispatch]);
+	const updateRunResult = useCallback((props) => {
+		dispatch({
+			type: UPDATE_RUN_RESULT,
+			payload: props
+		})
+	}, [dispatch]);
 
 	return <DijkstraContext.Provider value={{
 		store, addVertex, setWeight,
-		deleteVertex, run, reset,
-		doStep
+		deleteVertex, reset, updateRunResult
 	}}>
 		{ children }
 	</DijkstraContext.Provider>;
 }
 
 const dispatchers = {
-	[DO_STEP]: (payload, oldState) => {
-		const {
-			simulator: { step },
-			vertexMap
-		} = oldState;
-
-		switch (step) {
-			case STEP_INITIAL: {
-				const { simulator } = oldState;
-
-				return {
-					...oldState,
-					start: payload,
-					shortestPath: Object.fromEntries(Object.entries(vertexMap).map(([key, val]) => val !== payload ? [key, I] : [key, 0])),
-					unvisited: Object.fromEntries(Object.values(vertexMap).map(ele => [ele, true])),
-					visited: {},
-					prev: Object.fromEntries(Object.entries(vertexMap).map(([key, val]) => [val, []])),
-					simulator: { ...simulator, step: STEP_CALCULATE_COSTS }
-				};
-			}
-			case STEP_CALCULATE_COSTS: {
-				const {
-					neighbors, vertexMap,
-					unvisited: oldUnvisited,
-					visited: oldVisited,
-					shortestPath: oldShortestPath, prev,
-					start, simulator
-				} = oldState;
-				const unvisited = {...oldUnvisited};
-				const visited = {...oldVisited};
-				const shortestPath = {...oldShortestPath};
-				const newPrev = {...prev};
-				let currentCost, calculatedCost;
-				const flippedVertexMap = flip(vertexMap);
-
-				for (let i of neighbors[start].keys()) {
-					if (neighbors[start][i] !== I && unvisited[i] === true) {
-						currentCost = +shortestPath[flippedVertexMap[i]];
-						calculatedCost = +(shortestPath[flippedVertexMap[start]] + neighbors[start][i]);
-
-						if (calculatedCost < currentCost) {
-							shortestPath[flippedVertexMap[i]] = calculatedCost;
-							newPrev[i] = [
-								...newPrev[i],
-								flippedVertexMap[start]
-							];
-						}
-					}
-				}
-
-				visited[start] = true;
-				delete unvisited[start];
-
-				return {
-					...oldState,
-					visited, unvisited, shortestPath,
-					prev: newPrev,
-					simulator: { ...simulator, step: STEP_LOCATE_MIN }
-				};
-			}
-			case STEP_LOCATE_MIN: {
-				const {
-					unvisited, vertexMap,
-					shortestPath, start, simulator, prev
-				} = oldState;
-				const flippedVertexMap = flip(vertexMap);
-
-				let newStart = +Object.keys(unvisited).reduce(([minIndex, minValue], current) => {
-					if (shortestPath[flippedVertexMap[current]] < minValue) {
-						return [current, shortestPath[flippedVertexMap[current]]];
-					}
-
-					return [minIndex, minValue];
-				}, [-1, Infinity])[0];
-
-				if (newStart === -1) {
-					return {
-						...oldState,
-						simulator: { ...simulator, step: STEP_END }
-					};
-				}
-
-				return {
-					...oldState,
-					start: newStart,
-					simulator: { ...simulator, step: STEP_CALCULATE_COSTS }
-				};
-			}
-			case STEP_END: {
-				const { simulator } = oldState;
-
-				return { ...oldState, simulator: { ...simulator, step: STEP_INITIAL } };
-			}
-			default: return oldState;
-		};
-	},
 	[RESET]: (payload, oldState) => {
 		return {
 			...oldState,
-			start: -1,
 			shortestPath: {},
 			unvisited: {},
 			visited: {},
-			prev: {},
-			simulator: { step: STEP_INITIAL }
+			paths: []
 		};
 	},
-	[RUN]: (payload, oldState) => {
-		const { vertexMap, neighbors } = oldState;
-		const flippedVertexMap = flip(vertexMap);
-		let start = payload;
-		let shortestPath = Object.fromEntries(Object.entries(vertexMap).map(([key, val]) => val !== start ? [key, I] : [key, 0]));
-		let unvisited = Object.fromEntries(Object.values(vertexMap).map(ele => [ele, true]));
-		let prev = Object.fromEntries(Object.entries(vertexMap).map(([key, val]) => [val, []]))
-		let visited = {};
-		let currentCost, calculatedCost;
-
-		while (!isEmpty(unvisited)) {
-			for (let i of neighbors[start].keys()) {
-				if (neighbors[start][i] !== I && unvisited[i] === true) {
-					currentCost = +shortestPath[flippedVertexMap[i]];
-					calculatedCost = +(shortestPath[flippedVertexMap[start]] + neighbors[start][i]);
-
-					if (calculatedCost < currentCost) {
-						shortestPath[flippedVertexMap[i]] = calculatedCost;
-						prev[i] = [
-							...prev[i],
-							flippedVertexMap[start]
-						];
-					}
-				}
-			}
-
-			visited[start] = true;
-			delete unvisited[start];
-
-			start = +Object.keys(unvisited).reduce(([minIndex, minValue], current) => {
-				if (shortestPath[flippedVertexMap[current]] < minValue) {
-					return [current, shortestPath[flippedVertexMap[current]]];
-				}
-
-				return [minIndex, minValue];
-			}, [-1, Infinity])[0];
-		}
+	[UPDATE_RUN_RESULT]: function ({
+			shortestPath, unvisited, visited, paths
+		}, oldState) {
+		const {
+			shortestPath: oldShortestPath,
+			unvisited: oldUnvisited,
+			visited: oldVisited,
+			paths: oldPaths
+		} = oldState;
 		
 		return {
 			...oldState,
-			start,
-			shortestPath,
-			unvisited,
-			visited,
-			prev: Object.fromEntries(Object.entries(prev).map(([key, val], index) => [key, [...val, flippedVertexMap[index]]]))
+			shortestPath: shortestPath || oldShortestPath,
+			unvisited: unvisited || oldUnvisited,
+			visited: visited || oldVisited,
+			paths: paths || oldPaths
 		};
 	},
 	[DEL_VERTEX]: (payload, oldState) => {

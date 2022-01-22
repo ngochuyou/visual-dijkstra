@@ -129,6 +129,7 @@
 .canvas > svg > text {
 	fill: red;
 	font: bold 20px sans-serif;
+	background-color: blue;
 }
 
 .vertex {
@@ -145,7 +146,7 @@
 	transform: translate(-25px, -25px);
 	z-index: 10;
 	font-weight: 800;
-	cursor: pointer;
+	cursor: grab;
 }
 
 .vertex.selected {
@@ -193,4 +194,85 @@
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+}
+
+.labeled {
+	position: relative;
+}
+
+.labeled > input:focus {
+	outline: none;
+}
+
+.labeled > input {
+	padding: 5px 10px;
+	width: 100%;
+	height: 40px;
+	font-size: 16px;
+	border: 1px solid lightgrey;
+	border-radius: 5px;
+	box-sizing: border-box;
+}
+
+.labeled > label {
+	position: absolute;
+	transition: all .2s;
+	background-color: white;
+	padding: 0 5px;
+}
+
+.labeled > input:invalid + label {
+	top: 7px;
+	left: 12px;
+	font-size: 16px;
+}
+
+.labeled > input:valid + label, .labeled > input:focus + label {
+	top: -13.5px;
+	left: 10px;
+	color: #1e87f0;
+	font-size: 16px;
+}
+
+.change-color {
+	transition: all .2s;
+	animation:change-color 4s linear infinite;
+}
+
+@keyframes change-color {
+	0%: {
+		color: #000000;
+	}
+
+	50% {
+		color: #ffffff;
+	}
+
+	100% {
+		color: #000000;
+	}
+}
+
+.spin {
+	-webkit-animation:spin 2s linear infinite;
+	-moz-animation:spin 2s linear infinite;
+	animation:spin 2s linear infinite;
+}
+
+@-moz-keyframes spin {
+	100% {
+		-moz-transform: rotate(360deg);
+	} 
+}
+
+@-webkit-keyframes spin {
+	100% {
+		-webkit-transform: rotate(360deg);
+	}
+}
+
+@keyframes spin {
+	100% {
+		-webkit-transform: rotate(360deg); transform:rotate(360deg);
+	}
 }

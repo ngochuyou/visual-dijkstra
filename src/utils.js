@@ -1,3 +1,5 @@
+export const I = Infinity;
+
 export const asIf = (predicate = false) => new AsIf(predicate);
 
 class AsIf {
@@ -44,7 +46,7 @@ export const atom = (array, identifier = "id") => {
 	const keyMapper = hasLength(identifier) ?
 		ele => ele[identifier] :
 		ele => ele;
-
+		
 	return Object.fromEntries(array.map(ele => [keyMapper(ele), ele]));
 };
 
@@ -59,3 +61,41 @@ export const isEmpty = (obj = {}) => {
 }
 
 export const flip = (obj) => Object.fromEntries(Object.entries(obj).map(([key, val]) => [val, key]));
+
+class Node {
+	constructor(data) {
+		this.data = data;
+		this.nextNode = null;
+	}
+
+	chain(nextNode) {
+		this.nextNode = nextNode;
+		return this;
+	}
+
+	next() {
+		return this.nextNode;
+	}
+
+}
+
+export class Stack {
+	#head = null;
+
+	push(data) {
+		this.head = new Node(data).chain(this.head);
+		return this;		
+	}
+
+	map(mapper) {
+		let product = [];
+		let cursor = this.head;
+
+		while (cursor != null) {
+			product = [...product, mapper(cursor.data)];
+			cursor = cursor.next();
+		}
+
+		return product;
+	}
+}
