@@ -15,7 +15,7 @@ export default function DijkstraTable() {
 		verticies, selectedVerticies
 	} } = useGraph();
 	const [tab, setTab] = useState(<TableTab />);
-
+	
 	return (
 		<div>
 			<div className="uk-margin uk-child-width-1-2 uk-grid-small" uk-grid="">

@@ -14,11 +14,13 @@ const GraphContext = createContext({});
 
 export const useGraph = () => useContext(GraphContext);
 
+const SET_VERTICIES = "SET_VERTICIES";
 const ADD_VERTEX = "ADD_VERTEX";
 const CLEAR = "CLEAR";
 const MOD_VERTEX_CORDS = "MOD_VERTEX_CORDS";
 const MOD_VERTEX_SELECT_STATE = "MOD_VERTEX_SELECT_STATE";
 const DEL_VERTEX = "DEL_VERTEX";
+const SET_EDGES = "SET_EDGES";
 const CONNECT_VERTICIES = "CONNECT_VERTICIES";
 const DISCONNECT_VERTICIES = "DISCONNECT_VERTICIES";
 const MOD_EDGE_WEIGHT = "MOD_EDGE_WEIGHT";
@@ -87,7 +89,8 @@ export default function GraphContextProvider({ children }) {
 		addVertex: dijkstraAddVertex,
 		setWeight: dijkstraSetWeight,
 		deleteVertex: dijkstraDeleteVertex,
-		reset: dijkstraReset
+		reset: dijkstraReset,
+		setVertexMap: dijkstraSetVertexMap
 	} = useDijkstra();
 
 	const addVertex = useCallback((vertexName) => {
@@ -135,7 +138,7 @@ export default function GraphContextProvider({ children }) {
 	}, [dispatch, store, dijkstraDeleteVertex, dijkstraReset]);
 
 	const connectVerticies = useCallback((weight = 0) => {
-		if (isNaN(weight) || weight < 1) {
+		if (isNaN(weight) || weight <= 0) {
 			return;
 		}
 
@@ -212,18 +215,45 @@ export default function GraphContextProvider({ children }) {
 
 	const clearSelectedEdges = useCallback(() => dispatch({ type: CLEAR_SELECTED_EDGES }), [dispatch]);
 
+	const setVerticies = useCallback((verticies) => {
+		dispatch({
+			type: SET_VERTICIES,
+			payload: verticies
+		});
+		dijkstraSetVertexMap(verticies);
+	}, [dispatch, dijkstraSetVertexMap]);
+
+	const setEdges = useCallback((edges) => {
+		dispatch({
+			type: SET_EDGES,
+			payload: edges
+		});
+	}, [dispatch]);	
+
 	return <GraphContext.Provider value={{
 		store, addVertex, modifyVertexCords,
 		modifyVertexSelectState, deleteVertex,
 		connectVerticies, disconnectVerticies,
 		clear, modifyEdgesSelectState, clearSelectedVerticies,
-		clearSelectedEdges
+		clearSelectedEdges, setVerticies, setEdges
 	}}>
 		{ children }
 	</GraphContext.Provider>;
 }
 
 const dispatchers = {
+	[SET_VERTICIES]: (payload, oldState) => {
+		return {
+			...oldState,
+			verticies: payload
+		};
+	},
+	[SET_EDGES]: (payload, oldState) => {
+		return {
+			...oldState,
+			edges: payload
+		};
+	},
 	[CLEAR_SELECTED_EDGES]: (payload, oldState) => {
 		const { edges } = oldState;
 

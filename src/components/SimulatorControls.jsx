@@ -5,6 +5,7 @@ import { NoFollow } from './Link';
 import { useGraph } from '../hooks/graph-hooks';
 import { useDijkstra } from '../hooks/dijkstra-hooks';
 import { useInput } from '../hooks/utils-hooks';
+import { useSystem } from '../hooks/system-hooks';
 
 import { flip, isEmpty, I, Stack, spread, hasLength } from '../utils';
 
@@ -54,6 +55,7 @@ function DijkstraPlayer() {
 		},
 		updateRunResult
 	} = useDijkstra();
+	const { setNoti } = useSystem();
 	const { setStepExplanation } = useSimulator();
 	const [step, setStep] = useState(STEP_INITIAL);
 	const [currentNodeIndex, setCurrentNodeIndex] = useState(-1);
@@ -143,7 +145,7 @@ function DijkstraPlayer() {
 						calculatedCost = +(newShortestPath[flippedVertexMap[start]] + neighbors[start][i]);
 						highlightedEdges = [...highlightedEdges, ...edges.filter((ele, index) => ele.contains(flippedVertexMap[start]) && ele.contains(flippedVertexMap[i]))];
 						explanationElements.push(`Current cost of ${verticies[i].name} is ${currentCost} and the calculated cost is ${calculatedCost} so we ${calculatedCost < currentCost ? "update the new cost" : "do nothing"}.`);
-
+						
 						if (calculatedCost < currentCost) {
 							newShortestPath[flippedVertexMap[i]] = calculatedCost;
 							newPrevious[i] = flippedVertexMap[start];
@@ -233,6 +235,11 @@ function DijkstraPlayer() {
 	};
 
 	const onAutoplay = () => {
+		if (selectedVerticies.length < 1) {
+			setNoti("Select at least 1 vertex");
+			return;
+		}
+		
 		clearInterval(autoplayer);
 		setAutoplayer(setInterval(simulate, hasLength(speedProps.value) ? speedProps.value * 1000 : 1000));
 	};
@@ -241,22 +248,33 @@ function DijkstraPlayer() {
 		clearInterval(autoplayer);
 	};
 
+	const onStep = () => {
+		if (selectedVerticies.length < 1) {
+			setNoti("Select at least 1 vertex");
+			return;
+		}
+
+		simulate();
+	}
+
 	return (
 		<>
 			<li>
 				<NoFollow
-					onClick={simulate}
+					onClick={onStep}
 					className="uk-button"
+					uk-tooltip="Step forward"
 				>
-					Step
+					<div uk-icon="play"></div>
 				</NoFollow>
 			</li>
 			<li>
 				<NoFollow
 					onClick={onAutoplay}
 					className="uk-button"
+					uk-tooltip="Autoplay"
 				>
-					Autoplay
+					<div uk-icon="play-circle"></div>
 				</NoFollow>
 			</li>
 			<li>
@@ -264,7 +282,10 @@ function DijkstraPlayer() {
 					onClick={stopAutoplay}
 					className="uk-button"
 				>
-					Stop
+					<div
+						uk-icon="ban"
+						uk-tooltip="Pause"
+					></div>
 				</NoFollow>
 			</li>
 			<li

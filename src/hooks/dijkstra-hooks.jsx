@@ -31,6 +31,8 @@ const STORE = {
 	paths: []
 };
 
+const SET_VERTEX_MAP = "SET_VERTEX_MAP";
+const SET_NEIGHBORS = "SET_NEIGHBORS";
 const ADD_VERTEX = "ADD_VERTEX";
 const SET_WEIGHT = "SET_WEIGHT";
 const DEL_VERTEX = "DEL_VERTEX";
@@ -82,15 +84,42 @@ export default function DijkstraContextProvider({ children }) {
 		})
 	}, [dispatch]);
 
+	const setVertexMap = useCallback((verticies) => {
+		dispatch({
+			type: SET_VERTEX_MAP,
+			payload: Object.fromEntries(verticies.map((ele, index) => [ele.id, index]))
+		});
+	}, [dispatch]);
+
+	const setNeighbors = useCallback((neighbors) => {
+		dispatch({
+			type: SET_NEIGHBORS,
+			payload: neighbors
+		});
+	}, [dispatch]);
+
 	return <DijkstraContext.Provider value={{
 		store, addVertex, setWeight,
-		deleteVertex, reset, updateRunResult
+		deleteVertex, reset, updateRunResult,
+		setVertexMap, setNeighbors
 	}}>
 		{ children }
 	</DijkstraContext.Provider>;
 }
 
 const dispatchers = {
+	[SET_NEIGHBORS]: (payload, oldState) => {
+		return {
+			...oldState,
+			neighbors: payload
+		};
+	},
+	[SET_VERTEX_MAP]: (payload, oldState) => {
+		return {
+			...oldState,
+			vertexMap: payload
+		};
+	},
 	[RESET]: (payload, oldState) => {
 		return {
 			...oldState,
@@ -139,9 +168,9 @@ const dispatchers = {
 		const { vertexAId, vertexBId, weight } = payload;
 		const [ i, j ] = [vertexMap[vertexAId], vertexMap[vertexBId]];
 		const newNeighbors = [...neighbors];
-
-		newNeighbors[i][j] = weight;
-		newNeighbors[j][i] = weight;
+		console.log(parseFloat(weight));
+		newNeighbors[i][j] = parseFloat(weight);
+		newNeighbors[j][i] = newNeighbors[i][j];
 
 		return {
 			...oldState,

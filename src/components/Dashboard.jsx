@@ -1,16 +1,22 @@
 import { useState, useRef, useEffect } from 'react';
 
+import { v4 } from 'uuid';
+
 import { NoFollow } from './Link';
 import { CenterModal } from './Modal';
 import SimulatorControls from './SimulatorControls';
 
 import { useGraph } from '../hooks/graph-hooks';
 import { useDijkstra } from '../hooks/dijkstra-hooks';
+import { useSystem } from '../hooks/system-hooks';
 import { useInput, useToggle } from '../hooks/utils-hooks';
 import {
 	usePanel,
 	TYPE_A as LAYOUT_TYPE_A, TYPE_B as LAYOUT_TYPE_B
 } from './Panel';
+
+import Vertex from '../model/Vertex';
+import Edge from '../model/Edge';
 
 import { asIf, hasLength } from '../utils';
 
@@ -26,6 +32,7 @@ export default function Dashboard() {
 					<VertexConnector />
 					<VertexDisconnector />
 					<Clearer />
+					<Importer />
 					<SimulatorControls />
 					<Saver />
 				</ul>
@@ -40,11 +47,120 @@ export default function Dashboard() {
 	);
 }
 
+function Importer() {
+	const { clear, setVerticies, setEdges } = useGraph();
+	const {
+		reset: dijkstraReset,
+		setNeighbors, updateRunResult
+	} = useDijkstra();
+
+	const onImportSample = () => {
+		clear();
+		dijkstraReset();
+
+		const verticies = {
+			a: new Vertex({id: v4(), name: "A", top: 307, left: 174}),
+			b: new Vertex({id: v4(), name: "B", top: 132, left: 92}),
+			c: new Vertex({id: v4(), name: "C", top: 380, left: 371}),
+			d: new Vertex({id: v4(), name: "D", top: 219, left: 294}),
+			e: new Vertex({id: v4(), name: "E", top: 122, left: 494})
+		};
+
+		setVerticies(Object.values(verticies));
+		setEdges([
+			new Edge({ vertexA: verticies["a"], vertexB: verticies["b"], weight: 1 }),
+			new Edge({ vertexA: verticies["e"], vertexB: verticies["b"], weight: 3 }),
+			new Edge({ vertexA: verticies["e"], vertexB: verticies["d"], weight: 7 }),
+			new Edge({ vertexA: verticies["c"], vertexB: verticies["d"], weight: 1 }),
+			new Edge({ vertexA: verticies["c"], vertexB: verticies["e"], weight: 1 }),
+			new Edge({ vertexA: verticies["a"], vertexB: verticies["d"], weight: 2 }),
+			new Edge({ vertexA: verticies["b"], vertexB: verticies["d"], weight: 2 }),
+			new Edge({ vertexA: verticies["c"], vertexB: verticies["a"], weight: 5 })
+		]);
+		setNeighbors([
+			[Infinity, 1, 5, 2, Infinity],
+			[1, Infinity, Infinity, 2, 3],
+			[5, Infinity, Infinity, 1, 1],
+			[2, 2, 1, Infinity, 7],
+			[Infinity, 3, 1, 7, Infinity]
+		]);
+		updateRunResult({
+			shortestPath: {},
+			unvisited: {},
+			visited: {},
+			paths: []
+		});
+		clear();
+		dijkstraReset();
+	};
+
+	const onImportSave = () => {
+		setVerticies(JSON.parse(localStorage[STORAGE_VERTICIES_KEY])
+			.map(ele => new Vertex(ele)));
+		setEdges(JSON.parse(localStorage[STORAGE_EDGES_KEY])
+			.map(ele => new Edge(ele)));
+		setNeighbors(JSON.parse(localStorage[STORAGE_NEIGHBORS_KEY])
+			.map(array => array.map(ele => ele == null ? Infinity : ele)));
+		updateRunResult({
+			shortestPath: {},
+			unvisited: {},
+			visited: {},
+			paths: []
+		});
+		clear();
+		dijkstraReset();
+	};
+
+	return (
+		<>
+			<li>
+				<NoFollow>
+					<div
+						uk-icon="pull"
+						uk-tooltip="Import"
+					></div>
+				</NoFollow>
+					<div className="uk-navbar-dropdown">
+						<ul className="uk-nav uk-navbar-dropdown-nav">
+							<li className="uk-active">
+								<NoFollow
+									onClick={onImportSample}
+								>From sample</NoFollow>
+							</li>
+							<li className="uk-nav-divider"></li>
+							<li className="uk-active">
+								<NoFollow
+									onClick={onImportSave}
+								>From last save</NoFollow>
+							</li>
+						</ul>
+					</div>
+			</li>
+		</>
+	);
+}
+
+const STORAGE_VERTICIES_KEY = "verticies";
+const STORAGE_EDGES_KEY = "edges";
+const STORAGE_NEIGHBORS_KEY = "neighbors";
+
 function Saver() {
+	const { store: { verticies, edges } } = useGraph();
+	const { store: { neighbors } } = useDijkstra();
+	const { setNoti } = useSystem();
+
+	const onSave = () => {
+		localStorage[STORAGE_VERTICIES_KEY] = JSON.stringify(verticies);
+		localStorage[STORAGE_EDGES_KEY] = JSON.stringify(edges);
+		localStorage[STORAGE_NEIGHBORS_KEY] = JSON.stringify(neighbors);
+		setNoti("Graph saved");
+	};
+
 	return (
 		<>
 			<li>
 				<NoFollow
+					onClick={onSave}
 					className="uk-button"
 				>
 					Save
@@ -60,7 +176,12 @@ function LayoutPicker() {
 	return (
 		<>
 			<li>
-				<NoFollow>Layout</NoFollow>
+				<NoFollow>
+					<div
+						uk-icon="thumbnails"
+						uk-tooltip="Layout"
+					></div>
+				</NoFollow>
 				<div className="uk-navbar-dropdown uk-navbar-dropdown-width-2">
 					<div className="uk-navbar-dropdown-grid uk-child-width-1-2" uk-grid="">
 						<div>
@@ -139,13 +260,7 @@ function LayoutPicker() {
 function Logo() {
 	return (
 		<NoFollow className="uk-navbar-item uk-logo">
-			<div
-				uk-icon="icon: chevron-left; ratio: 1.2"
-			></div>
 			Dijkstra
-			<div
-				uk-icon="icon: chevron-right; ratio: 1.2"
-			></div>
 		</NoFollow>
 	);
 }
@@ -166,7 +281,10 @@ function Clearer() {
 					onClick={onClear}
 					className="uk-button"
 				>
-					Clear
+					<div
+						uk-icon="refresh"
+						uk-tooltip="Clear"
+					></div>
 				</NoFollow>
 			</li>
 		</>
@@ -174,13 +292,26 @@ function Clearer() {
 }
 
 function VertexDisconnector() {
-	const { disconnectVerticies } = useGraph();
-	
+	const {
+		store: { selectedVerticies },
+		disconnectVerticies
+	} = useGraph();
+	const { setNoti } = useSystem();
+
+	const onDisconnect = () => {
+		if (selectedVerticies.length < 2) {
+			setNoti("Select at least 2 verticies");
+			return;
+		}
+
+		disconnectVerticies();
+	};
+
 	return (
 		<>
 			<li>
 				<NoFollow
-					onClick={disconnectVerticies}
+					onClick={onDisconnect}
 				>
 					<div
 						className="crossed" uk-icon="link"
@@ -193,7 +324,8 @@ function VertexDisconnector() {
 }
 
 function VertexConnector() {
-	const { connectVerticies } = useGraph();
+	const { store: { selectedVerticies }, connectVerticies } = useGraph();
+	const { setNoti } = useSystem();
 	const [ isFormVisible, toggleFormVision ] = useToggle(false);
 	const [ weightProps, ] = useInput(1);
 	const [ error, setError ] = useState(null);
@@ -204,20 +336,36 @@ function VertexConnector() {
 
 		const { value: weight } = weightProps;
 
-		if (weight < 1) {
+		if (weight <= 0) {
 			setError("Weight must be a positive number");
 			return;
 		}
 
 		setError(null);
 		connectVerticies(weight);
+		toggleFormVision();
 	}
+
+	const onKeyDown = (e) => {
+		if (e.keyCode === 27) {
+			toggleFormVision();
+		}
+	};
+
+	const onOpen = () => {
+		if (selectedVerticies.length < 2) {
+			setNoti("Select at least 2 verticies");
+			return;
+		}
+
+		toggleFormVision();
+	};
 
 	return (
 		<>
 			<li>
 				<NoFollow
-					onClick={toggleFormVision}
+					onClick={onOpen}
 				>
 					<div
 						uk-icon="link"
@@ -242,6 +390,8 @@ function VertexConnector() {
 										type="number"
 										required="required"
 										{ ...weightProps }
+										onKeyDown={onKeyDown}
+										step="0.01"
 									/>
 									<label forhtml="weight-input">Edge Weight</label>
 									<p className="uk-text-danger">{error}</p>
@@ -311,6 +461,12 @@ function VertexAdder() {
 		setVertexName("");
 		addVertex(vertexName);
 	};
+
+	const onKeyDown = (e) => {
+		if (e.keyCode === 27) {
+			toggleFormVision();
+		}
+	};
 	
 	return (
 		<>
@@ -337,6 +493,7 @@ function VertexAdder() {
 										id="vertex-name-input"
 										required="required"
 										{ ...vertexNameProps }
+										onKeyDown={onKeyDown}
 									/>
 									<label forhtml="vertex-name-input">Vertex Name</label>
 									<p className="uk-text-danger">{error}</p>
