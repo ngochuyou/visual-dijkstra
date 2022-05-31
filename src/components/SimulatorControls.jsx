@@ -21,7 +21,7 @@ export const useSimulator = () => useContext(SimulatorContext);
 
 export function SimulatorContextProvider({ children }) {
 	const [stepExplanation, setStepExplanation] = useState("");
-
+	
 	return (
 		<SimulatorContext.Provider value={{
 			stepExplanation, setStepExplanation
@@ -240,6 +240,8 @@ function DijkstraPlayer() {
 			return;
 		}
 		
+		clearSelectedEdges();
+		clearSelectedVerticies();
 		clearInterval(autoplayer);
 		setAutoplayer(setInterval(simulate, hasLength(speedProps.value) ? speedProps.value * 1000 : 1000));
 	};

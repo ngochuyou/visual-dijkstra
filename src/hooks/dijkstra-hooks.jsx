@@ -11,20 +11,8 @@ const DijkstraContext = createContext({});
 export const useDijkstra = () => useContext(DijkstraContext);
 
 const STORE = {
-	vertexMap: {
-		"a": 0,
-		"b": 1,
-		"c": 2,
-		"d": 3,
-		"e": 4
-	},
-	neighbors: [
-		[Infinity, 1, 5, 2, Infinity],
-		[1, Infinity, Infinity, 2, 3],
-		[5, Infinity, Infinity, 1, 1],
-		[2, 2, 1, Infinity, 7],
-		[Infinity, 3, 1, 7, Infinity]
-	],
+	vertexMap: {},
+	neighbors: [],
 	shortestPath: {},
 	unvisited: {},
 	visited: {},

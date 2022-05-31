@@ -31,56 +31,9 @@ const CLEAR_SELECTED_EDGES = "CLEAR_SELECTED_EDGES";
 const VERTEX_ID_PROPNAME = "id";
 
 const STORE = {
-	verticies: [
-		new Vertex({id: "a", name: "A", top: 307, left: 174}),
-		new Vertex({id: "b", name: "B", top: 132, left: 92}),
-		new Vertex({id: "c", name: "C", top: 380, left: 371}),
-		new Vertex({id: "d", name: "D", top: 219, left: 294}),
-		new Vertex({id: "e", name: "E", top: 122, left: 494})
-	],
+	verticies: [],
 	selectedVerticies: [],
-	edges: [
-		new Edge({
-			vertexA: new Vertex({id: "a", name: "A", top: 307, left: 174}),
-			vertexB: new Vertex({id: "b", name: "B", top: 132, left: 92}),
-			weight: 1
-		}),
-		new Edge({
-			vertexA: new Vertex({id: "e", name: "E", top: 122, left: 494}),
-			vertexB: new Vertex({id: "b", name: "B", top: 132, left: 92}),
-			weight: 3
-		}),
-		new Edge({
-			vertexA: new Vertex({id: "e", name: "E", top: 122, left: 494}),
-			vertexB: new Vertex({id: "d", name: "D", top: 219, left: 294}),
-			weight: 7
-		}),
-		new Edge({
-			vertexA: new Vertex({id: "c", name: "C", top: 380, left: 371}),
-			vertexB: new Vertex({id: "d", name: "D", top: 219, left: 294}),
-			weight: 1
-		}),
-		new Edge({
-			vertexA: new Vertex({id: "c", name: "C", top: 380, left: 371}),
-			vertexB: new Vertex({id: "e", name: "E", top: 122, left: 494}),
-			weight: 1
-		}),
-		new Edge({
-			vertexA: new Vertex({id: "a", name: "A", top: 307, left: 174}),
-			vertexB: new Vertex({id: "d", name: "D", top: 219, left: 294}),
-			weight: 2
-		}),
-		new Edge({
-			vertexA: new Vertex({id: "b", name: "B", top: 132, left: 92}),
-			vertexB: new Vertex({id: "d", name: "D", top: 219, left: 294}),
-			weight: 2
-		}),
-		new Edge({
-			vertexA: new Vertex({id: "c", name: "C", top: 380, left: 371}),
-			vertexB: new Vertex({id: "a", name: "A", top: 307, left: 174}),
-			weight: 5
-		})
-	]
+	edges: []
 };
 
 export default function GraphContextProvider({ children }) {

@@ -56,11 +56,32 @@ export default function DijkstraTable() {
 
 function TableTab() {
 	const { store: {
-		shortestPath, vertexMap, paths
+		shortestPath, vertexMap, paths,
+		visited
 	} } = useDijkstra();
-	const { store: {
-		verticies
-	} } = useGraph();
+	const {
+		store: { verticies, edges },
+		clearSelectedEdges, modifyEdgesSelectState
+	} = useGraph();
+
+	const onSelectPath = (paths) => {
+		clearSelectedEdges();
+
+		const vertexIds = paths.map(ele => ele);
+		const verticiesLength = vertexIds.length;
+		const edgesLength = edges.length;
+		const highlightedEdges = [];
+
+		for (let i = 0; i < verticiesLength - 1; i++) {
+			for (let j = 0; j < edgesLength; j++) {
+				if (edges[j].contains(vertexIds[i]) && edges[j].contains(vertexIds[i + 1])) {
+					highlightedEdges.push(edges[j]);
+				}
+			}
+		}
+
+		modifyEdgesSelectState(highlightedEdges, true);
+	};
 
 	return (
 		<>
@@ -79,7 +100,11 @@ function TableTab() {
 				{
 					Object.entries(shortestPath)
 						.map(([key, val], index) => (
-							<tr key={key}>
+							<tr
+								onClick={() => onSelectPath(paths[index])}
+								key={key}
+								className={`pointer ${visited[index] == null ? null : "uk-background-muted"}`}
+							>
 								<td className="uk-text-center">{verticies[vertexMap[key]].name}</td>
 								<td className="uk-text-center">{val === Infinity ? <>&infin;</> : val}</td>
 								<td>{paths[index].map(ele => verticies[vertexMap[ele]].name).join(' ')}</td>

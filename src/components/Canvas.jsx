@@ -16,6 +16,13 @@ function EdgeLayer() {
 	
 	return (
 		<svg uk-height-viewport="offset-top: true">
+			<filter x="0" y="0" width="1" height="1" id="solid">
+				<feFlood floodColor="white" result="bg" />
+				<feMerge>
+					<feMergeNode in="bg"/>
+					<feMergeNode in="SourceGraphic"/>
+				</feMerge>
+			</filter>
 		{
 			edges.map((ele, index) => (
 				<Fragment key={ index }>
@@ -27,6 +34,7 @@ function EdgeLayer() {
 						className={ele.selected ? "selected" : ""}
 					></line>
 					<text
+						filter="url(#solid)"
 						x={ ele.textLeft }
 						y={ ele.textTop }
 					>{ ele.weight }</text>
@@ -39,7 +47,7 @@ function EdgeLayer() {
 
 function VertexLayer() {
 	const {
-		store: { verticies   },
+		store: { verticies },
 		modifyVertexCords, modifyVertexSelectState
 	} = useGraph();
 

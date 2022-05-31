@@ -53,6 +53,7 @@ function Importer() {
 		reset: dijkstraReset,
 		setNeighbors, updateRunResult
 	} = useDijkstra();
+	const { setNoti } = useSystem();
 
 	const onImportSample = () => {
 		clear();
@@ -95,11 +96,20 @@ function Importer() {
 	};
 
 	const onImportSave = () => {
-		setVerticies(JSON.parse(localStorage[STORAGE_VERTICIES_KEY])
+		const storedVerticiesJSON = localStorage[STORAGE_VERTICIES_KEY];
+		const storedEdgesJSON = localStorage[STORAGE_EDGES_KEY];
+		const storedNeighborsJSON = localStorage[STORAGE_NEIGHBORS_KEY];
+
+		if (storedVerticiesJSON == null || storedEdgesJSON == null || storedNeighborsJSON == null) {
+			setNoti("Could not find any saved Graphs");
+			return;
+		}
+
+		setVerticies(JSON.parse(storedVerticiesJSON)
 			.map(ele => new Vertex(ele)));
-		setEdges(JSON.parse(localStorage[STORAGE_EDGES_KEY])
+		setEdges(JSON.parse(storedEdgesJSON)
 			.map(ele => new Edge(ele)));
-		setNeighbors(JSON.parse(localStorage[STORAGE_NEIGHBORS_KEY])
+		setNeighbors(JSON.parse(storedNeighborsJSON)
 			.map(array => array.map(ele => ele == null ? Infinity : ele)));
 		updateRunResult({
 			shortestPath: {},
@@ -120,21 +130,21 @@ function Importer() {
 						uk-tooltip="Import"
 					></div>
 				</NoFollow>
-					<div className="uk-navbar-dropdown">
-						<ul className="uk-nav uk-navbar-dropdown-nav">
-							<li className="uk-active">
-								<NoFollow
-									onClick={onImportSample}
-								>From sample</NoFollow>
-							</li>
-							<li className="uk-nav-divider"></li>
-							<li className="uk-active">
-								<NoFollow
-									onClick={onImportSave}
-								>From last save</NoFollow>
-							</li>
-						</ul>
-					</div>
+				<div className="uk-navbar-dropdown">
+					<ul className="uk-nav uk-navbar-dropdown-nav">
+						<li className="uk-active">
+							<NoFollow
+								onClick={onImportSample}
+							>From sample</NoFollow>
+						</li>
+						<li className="uk-nav-divider"></li>
+						<li className="uk-active">
+							<NoFollow
+								onClick={onImportSave}
+							>From last save</NoFollow>
+						</li>
+					</ul>
+				</div>
 			</li>
 		</>
 	);

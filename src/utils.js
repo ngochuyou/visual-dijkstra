@@ -96,6 +96,10 @@ export class Stack {
 			cursor = cursor.next();
 		}
 
+		if (product.length === 1) {
+			return [];
+		}
+
 		return product;
 	}
 }
